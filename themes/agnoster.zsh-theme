@@ -79,7 +79,7 @@ prompt_end() {
   else
     echo -n "%{%k%}"
   fi
-  echo -n "%{%f%}"
+  echo -n "\n%{%F{$CURRENT_BG}%}$SEGMENT_SEPARATOR%{%f%}"
   CURRENT_BG=''
 }
 
@@ -88,7 +88,7 @@ prompt_end() {
 
 # Context: user@hostname (who am I and where am I)
 prompt_context() {
-  if [[ "$USERNAME" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
+  if [[ "$USER" != "$DEFAULT_USER" || -n "$SSH_CLIENT" ]]; then
     prompt_segment black default "%(!.%{%F{yellow}%}.)%n@%m"
   fi
 }
@@ -106,15 +106,20 @@ prompt_git() {
   }
   local ref dirty mode repo_path
 
-   if [[ "$(git rev-parse --is-inside-work-tree 2>/dev/null)" = "true" ]]; then
+  if $(git rev-parse --is-inside-work-tree >/dev/null 2>&1); then
     repo_path=$(git rev-parse --git-dir 2>/dev/null)
     dirty=$(parse_git_dirty)
     ref=$(git symbolic-ref HEAD 2> /dev/null) || ref="➦ $(git rev-parse --short HEAD 2> /dev/null)"
     if [[ -n $dirty ]]; then
-      prompt_segment yellow black
+      bgcol=yellow
+      bgdark=11
+      fgdark=black
     else
-      prompt_segment green $CURRENT_FG
+      bgcol=green
+      bgdark=22
+      fgdark=white
     fi
+    prompt_segment $bgcol black
 
     if [[ -e "${repo_path}/BISECT_LOG" ]]; then
       mode=" <B>"
@@ -124,6 +129,8 @@ prompt_git() {
       mode=" >R>"
     fi
 
+    msg="$(git show --oneline -s 2> /dev/null)"
+
     setopt promptsubst
     autoload -Uz vcs_info
 
@@ -131,11 +138,12 @@ prompt_git() {
     zstyle ':vcs_info:*' get-revision true
     zstyle ':vcs_info:*' check-for-changes true
     zstyle ':vcs_info:*' stagedstr '✚'
-    zstyle ':vcs_info:*' unstagedstr '±'
+    zstyle ':vcs_info:*' unstagedstr '●'
     zstyle ':vcs_info:*' formats ' %u%c'
     zstyle ':vcs_info:*' actionformats ' %u%c'
     vcs_info
     echo -n "${ref/refs\/heads\//$PL_BRANCH_CHAR }${vcs_info_msg_0_%% }${mode}"
+    prompt_segment $bgdark $fgdark $msg
   fi
 }
 
@@ -204,7 +212,7 @@ prompt_hg() {
 
 # Dir: current working directory
 prompt_dir() {
-  prompt_segment blue $CURRENT_FG '%~'
+  prompt_segment blue white '%~'
 }
 
 # Virtualenv: current working virtualenv
@@ -235,7 +243,7 @@ prompt_status() {
 #   ends in '-prod'
 # - displays black on green otherwise
 prompt_aws() {
-  [[ -z "$AWS_PROFILE" || "$SHOW_AWS_PROMPT" = false ]] && return
+  [[ -z "$AWS_PROFILE" ]] && return
   case "$AWS_PROFILE" in
     *-prod|*production*) prompt_segment red yellow  "AWS: $AWS_PROFILE" ;;
     *) prompt_segment green black "AWS: $AWS_PROFILE" ;;
