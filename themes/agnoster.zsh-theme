@@ -230,7 +230,7 @@ prompt_virtualenv() {
 prompt_status() {
   local -a symbols
 
-  [[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘"
+  [[ $RETVAL -ne 0 ]] && symbols+="%{%F{red}%}✘ %B$RETVAL%b"
   [[ $UID -eq 0 ]] && symbols+="%{%F{yellow}%}⚡"
   [[ $(jobs -l | wc -l) -gt 0 ]] && symbols+="%{%F{cyan}%}⚙"
 
@@ -264,4 +264,10 @@ build_prompt() {
   prompt_end
 }
 
+## Right side
+build_rprompt() {
+# [%{$fg_no_bold[yellow]%}%?%{$reset_color%}]
+}
+
 PROMPT='%{%f%b%k%}$(build_prompt) '
+RPROMPT=''
