@@ -19,7 +19,7 @@ function title {
   case "$TERM" in
     cygwin|xterm*|putty*|rxvt*|konsole*|ansi|mlterm*|alacritty|st*)
       print -Pn "\e]2;${2:q}\a" # set window name
-      print -Pn "\e]1;${1:q}\a" # set tab name
+      #print -Pn "\e]1;${1:q}\a" # set tab name
       ;;
     screen*|tmux*)
       print -Pn "\ek${1:q}\e\\" # set screen hardstatus
@@ -48,7 +48,8 @@ fi
 # Runs before showing the prompt
 function omz_termsupport_precmd {
   [[ "${DISABLE_AUTO_TITLE:-}" != true ]] || return
-  title "$ZSH_THEME_TERM_TAB_TITLE_IDLE" "$ZSH_THEME_TERM_TITLE_IDLE"
+  # Sets the title to the last two components (or less) of the cwd
+  title "$ZSH_THEME_TERM_TAB_TITLE_IDLE" `print -P %~ | sed 's/.*\/\(.*\)\/\(.*\)$/\1\/\2/'` #"$ZSH_THEME_TERM_TITLE_IDLE"
 }
 
 # Runs before executing the command
